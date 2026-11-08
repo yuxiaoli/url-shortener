@@ -1,0 +1,22 @@
+{
+  "name": "vectorindex-url-shortener",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "links:init": "node scripts/sync.mjs init",
+    "links:validate": "node scripts/sync.mjs validate",
+    "links:plan": "node scripts/sync.mjs plan",
+    "links:apply": "node scripts/sync.mjs apply",
+    "dev": "wrangler dev --local --ip 127.0.0.1",
+    "test:edge": "node scripts/edge-smoke.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.153.0"
+  }
+}

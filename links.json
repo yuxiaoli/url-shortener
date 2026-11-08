@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "publicOrigin": "https://s.vectorindex.cloud",
+  "redirects": [
+    {
+      "path": "/test",
+      "target": "https://vectorindex.cloud/"
+    }
+  ]
+}

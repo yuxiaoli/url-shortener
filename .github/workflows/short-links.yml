@@ -1,0 +1,67 @@
+name: Validate and sync short links
+on:
+  pull_request:
+    paths: ['links.json', 'src/**', 'scripts/**', 'tests/**', 'package*.json', '.github/workflows/short-links.yml']
+  push:
+    branches: [develop]
+    paths: ['links.json', 'src/**', 'scripts/**', 'tests/**', 'package*.json', '.github/workflows/short-links.yml']
+  workflow_dispatch:
+    inputs:
+      allow_removals:
+        description: 'Explicitly allow paths removed from links.json to stop working'
+        type: boolean
+        default: false
+      allow_empty:
+        description: 'Explicitly allow publishing an empty map (disable every link)'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: vectorindex-short-links-production
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      # Core validation/sync have no third-party runtime dependencies.
+      - run: npm run check
+      - run: npm run links:validate
+  sync:
+    if: >-
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/develop' &&
+      vars.SHORT_LINKS_SYNC_ENABLED == 'true'
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: short-links-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Refuse stale workflow runs
+        shell: bash
+        run: |
+          latest="$(git ls-remote --exit-code origin refs/heads/develop | cut -f1)"
+          if [[ -z "$latest" || "$latest" != "$(git rev-parse HEAD)" ]]; then
+            echo "This is not the current develop commit. Publish a new commit for an intentional rollback."
+            exit 1
+          fi
+      - name: Synchronize the validated snapshot
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_KV_NAMESPACE_ID: ${{ vars.CLOUDFLARE_KV_NAMESPACE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ALLOW_REMOVALS: ${{ inputs.allow_removals || false }}
+          ALLOW_EMPTY: ${{ inputs.allow_empty || false }}
+        shell: bash
+        run: |
+          flags=()
+          if [[ "$ALLOW_REMOVALS" == "true" ]]; then flags+=(--allow-removals); fi
+          if [[ "$ALLOW_EMPTY" == "true" ]]; then flags+=(--allow-empty); fi
+          node scripts/sync.mjs sync "${flags[@]}"

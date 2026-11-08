@@ -167,3 +167,13 @@ temp/
 logs/
 .vs/
 .python-version
+# Private redirect configuration and sync receipts. Never commit real mappings by default.
+links.local.json
+.local/
+.dev.vars*
+.env*
+!.env.example
+wrangler.production.jsonc
+node_modules/
+.wrangler/
+dist/
