@@ -23,8 +23,11 @@ try {
  assert.equal(res.status,302);assert.equal(res.headers.get('location'),'https://example.com/guide?fixed=1');
  const head=await mf.dispatchFetch('https://s.vectorindex.cloud/smoke',{method:'HEAD',redirect:'manual'});assert.equal(head.status,302);assert.equal(await head.text(),'');
  const absent=await mf.dispatchFetch('https://s.vectorindex.cloud/not-there');assert.equal(absent.status,404);
+ const root=await mf.dispatchFetch('https://s.vectorindex.cloud/?token=private');assert.equal(root.status,200);const text=await root.text();assert.match(text,/VectorIndex short links/);assert.doesNotMatch(text,/private|example\.com|\/smoke/);
+ const rootHead=await mf.dispatchFetch('https://s.vectorindex.cloud/',{method:'HEAD'});assert.equal(rootHead.status,200);assert.equal(await rootHead.text(),'');
  const write=await mf.dispatchFetch('https://s.vectorindex.cloud/api/links',{method:'POST'});assert.equal(write.status,405);
  await kv.put('redirects:v1','broken');
  const broken=await mf.dispatchFetch('https://s.vectorindex.cloud/smoke');assert.equal(broken.status,503);
- console.log('Local workerd/KV integration: GET, HEAD, unknown path, blocked write and corrupt snapshot passed.');
+ const brokenRoot=await mf.dispatchFetch('https://s.vectorindex.cloud/');assert.equal(brokenRoot.status,503);
+ console.log('Local workerd/KV integration: GET, HEAD, root explanation, unknown path, blocked write and corrupt snapshot passed.');
 } finally {await mf.dispose();}

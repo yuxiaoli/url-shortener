@@ -6,7 +6,7 @@ A small Cloudflare Worker backed by Workers KV. Edit a project configuration fil
 
 ## Configuration
 
-`links.json` is the repository-managed input. Its initial public test mapping is `/test` → `https://vectorindex.cloud/`. This repository is public: committing a destination URL publishes it in Git and its history. Never commit private URLs, signed download links, embedded credentials, or tokens. Keep private mappings in ignored `links.local.json`, or use an explicitly approved private repository before enabling GitHub publishing.
+`links.json` is the repository-managed input. Its initial public test mapping is `/test` �� `https://vectorindex.cloud/`. This repository is public: committing a destination URL publishes it in Git and its history. Never commit private URLs, signed download links, embedded credentials, or tokens. Keep private mappings in ignored `links.local.json`, or use an explicitly approved private repository before enabling GitHub publishing.
 
 Example, using public destinations only:
 
@@ -21,11 +21,11 @@ Example, using public destinations only:
 }
 ```
 
-`/home` matches exactly and redirects to the saved URL. Paths are case-sensitive; `/home/` is not an alias. Nested paths work. Allowed path characters are ASCII letters, digits, `_`, `-`, and `/` separators, up to 160 characters. An explicit `/` entry is allowed; otherwise the root returns 404. Each path must occur once.
+`/home` matches exactly and redirects to the saved URL. Paths are case-sensitive; `/home/` is not an alias. Nested paths work. Allowed path characters are ASCII letters, digits, `_`, `-`, and `/` separators, up to 160 characters. An explicit `/` entry is allowed; otherwise the root returns a brief plain-text explanation without listing links or configuration. Each path must occur once.
 
 Targets must be complete HTTP(S) URLs. Domain, path, query and fragment are supported. The validator rejects credentials, control characters, local/IP-literal destinations, nonstandard ports, and this short-link hostname (to prevent direct loops). It does not fetch destinations or claim to detect phishing, DNS changes, or redirect loops on other sites. Only trusted maintainers should edit the map.
 
-Limit: 1,000 links / 256 KiB per snapshot. These are intentional application limits, not Cloudflare’s maximums.
+Limit: 1,000 links / 256 KiB per snapshot. These are intentional application limits, not Cloudflare��s maximums.
 
 ## Local checks
 
@@ -51,7 +51,8 @@ Initialization refuses to overwrite an existing file. Local configuration, sync 
 
 ## Redirect behavior
 
-- GET/HEAD return 302 with `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
+- Matched links return 302 for GET/HEAD with `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
+- The root returns a brief explanation (200) unless an explicit root redirect is configured. HEAD has no response body. An invalid or missing snapshot still fails closed.
 - Incoming query parameters do not override or append to the saved destination.
 - Unknown paths return 404; other methods return 405.
 - Missing/corrupt/incompatible snapshots or KV failures return 503 without exposing details.
@@ -81,7 +82,7 @@ npm run links:apply -- --allow-removals --allow-empty
 
 **KV is eventually consistent and has no compare-and-swap.** Hash checks narrow races but are not an atomic lock. Use exactly one publisher for a namespace. GitHub publishing is serialized; local commands lock only their own checkout. Do not publish locally while automation is active. A changed map or revocation may take 60 seconds or more to appear everywhere; `no-store` prevents additional browser caching but cannot bypass KV replication.
 
-Validation/read/backup errors stop before the active write. A timeout or ambiguous response during the active write means the outcome is **unknown**, not “unchanged.” Do not retry or roll back blindly; inspect the active and previous snapshots first. A successful response confirms acceptance, not global propagation.
+Validation/read/backup errors stop before the active write. A timeout or ambiguous response during the active write means the outcome is **unknown**, not ��unchanged.�� Do not retry or roll back blindly; inspect the active and previous snapshots first. A successful response confirms acceptance, not global propagation.
 
 ## GitHub editing workflow
 
@@ -89,7 +90,7 @@ Validation/read/backup errors stop before the active write. A timeout or ambiguo
 
 Once explicitly enabled with authorized credentials and a verified dedicated namespace, valid commits on current `develop` sync automatically. Stale workflow reruns are rejected. Intentional rollback should be a new commit, not a rerun of an old job. No PR receives the publishing secret, and the workflow has read-only repository permissions.
 
-Path removals stop automatic publishing. Deliberate removals can be applied by a manual workflow run with the relevant checkbox, or by the approved single local publisher. GitHub requires the workflow to exist on the repository’s default branch for the manual Actions dispatch UI; this repository currently defaults to `main`. Do not change that branch or its contents merely to bypass this setup decision.
+Path removals stop automatic publishing. Deliberate removals can be applied by a manual workflow run with the relevant checkbox, or by the approved single local publisher. GitHub requires the workflow to exist on the repository��s default branch for the manual Actions dispatch UI; this repository currently defaults to `main`. Do not change that branch or its contents merely to bypass this setup decision.
 
 An empty map will not be published automatically. Only the public homepage test link is bundled; no credentials or private destinations are included.
 

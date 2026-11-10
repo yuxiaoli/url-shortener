@@ -25,6 +25,8 @@ export default {
       const config = parseConfig(text);
       if (config.publicOrigin !== origin.origin) return reply(request, 503, 'Service unavailable.');
       const entry = config.redirects.find(link => link.path === url.pathname);
+      if (!entry && url.pathname === '/') return reply(request, 200,
+        'VectorIndex short links\n\nOpen a complete short link to continue to its destination.\nIf a link does not work, contact the person who shared it.\n');
       if (!entry) return reply(request, 404, 'Not found.');
       // Request query parameters never change or get appended to the stored target.
       return new Response(null, {status: 302, headers: {...headers, Location: entry.target}});
