@@ -2,7 +2,7 @@
 
 A small Cloudflare Worker backed by Workers KV. Edit a project configuration file, validate it, then publish a complete redirect snapshot. The initial hostname is `https://s.vectorindex.cloud`.
 
-**Status:** TOML authoring, validated JSON conversion, the redirect Worker and safe KV synchronization are implemented. Production automation still requires its explicitly enabled environment and verified existing credentials; a successful validation job alone is not proof of synchronization. The original Python/TinyURL client remains available as `main.py`.
+**Status:** Automatic publishing from `develop` is enabled: edit TOML, generate validated JSON, synchronize the existing KV snapshot, then verify public redirects. The [initial production workflow](https://github.com/yuxiaoli/url-shortener/actions/runs/43021433220) passed on 2026-11-11. Its sync result was `unchanged` because all eight mappings already matched production; it made no KV writes. A successful validation job alone is not proof of synchronization. The original Python/TinyURL client remains available as `main.py`.
 
 ## Configuration
 

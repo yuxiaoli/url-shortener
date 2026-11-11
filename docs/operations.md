@@ -38,6 +38,10 @@ Before first automated synchronization, compare the canonical generated JSON wit
 
 ## Enable GitHub publishing
 
+Production automation was activated on 2026-11-11 and verified by [push workflow 43021433220](https://github.com/yuxiaoli/url-shortener/actions/runs/43021433220) at commit `a656d2baa80b23d5770764df03aff7989f353e39`. Both validation and synchronization passed, followed by public redirect checks. The first sync was `unchanged`: the existing eight-link active snapshot and five-link previous snapshot were preserved without writes. The existing Worker was not redeployed.
+
+The configured `short-links-production` environment is restricted to `develop`, holds the approved credential and verified target variables, and `SHORT_LINKS_SYNC_ENABLED=true` enables the publisher. GitHub Actions is now the sole production publisher. Do not run a local sync concurrently; any future local recovery must first coordinate pausing automation and checking active runs.
+
 Configure the `short-links-production` environment and its approved Cloudflare secret. Add the verified account/namespace IDs as variables. Review who can edit `develop` and the workflow, because a trusted-branch editor can change code that runs with the sync credential. Keep PRs unprivileged; never switch to `pull_request_target` to expose secrets.
 
 Set repository variable `SHORT_LINKS_SYNC_ENABLED=true` only after initial live setup and testing. The workflow serializes publishers, checks that its commit is the current develop head, converts and validates the TOML source, backs up the previous snapshot only when changed, and then replaces the active key once. It verifies public redirects afterward and records `accepted` or `unchanged` in the Actions summary. A skipped sync job does not prove automation is enabled. Do not run other publishers against this namespace.
