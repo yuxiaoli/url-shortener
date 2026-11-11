@@ -15,6 +15,24 @@ test('redirects GET without forwarding caller query parameters', async () => {
 test('HEAD matches GET but has no body',async()=>{
   for(const path of ['/docs','/missing']){const res=await worker.fetch(new Request('https://s.vectorindex.cloud'+path,{method:'HEAD'}),env());assert.equal(res.status,path==='/docs'?302:404);assert.equal(await res.text(),'');}
 });
+test('parent and nested profile slugs resolve independently with exact matching',async()=>{
+  const redirects=[
+    {path:'/sean',target:'https://example.com/'},
+    {path:'/sean/in',target:'https://www.linkedin.com/in/example/'},
+    {path:'/sean/github',target:'https://github.com/example'},
+  ];
+  const configured=env(JSON.stringify({schemaVersion:1,publicOrigin:'https://s.vectorindex.cloud',redirects}));
+  for(const link of redirects){
+    for(const method of ['GET','HEAD']){
+      const response=await worker.fetch(new Request('https://s.vectorindex.cloud'+link.path+'?next=https://evil.example',{method}),configured);
+      assert.equal(response.status,302);assert.equal(response.headers.get('location'),link.target);
+    }
+  }
+  for(const path of ['/sean/unknown','/sean/in/child','/sean/in/','/Sean/in']){
+    const response=await worker.fetch(new Request('https://s.vectorindex.cloud'+path),configured);
+    assert.equal(response.status,404);assert.equal(response.headers.get('location'),null);
+  }
+});
 test('unknown routes do not list or expose the mapping',async()=>{
   for(const path of ['/','/links.json','/api/links','/missing','/Docs','/docs/','/%64ocs']){
     const res=await worker.fetch(new Request('https://s.vectorindex.cloud'+path),env());assert.equal(res.status,404,path);assert.equal(res.headers.get('location'),null);

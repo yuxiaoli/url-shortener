@@ -1,0 +1,40 @@
+# Source of truth. Edit this file; JSON is generated during publishing.
+# This repository is public. Never store credentials or private URLs here.
+schemaVersion = 1
+publicOrigin = "https://s.vectorindex.cloud"
+
+[[redirects]]
+path = "/test"
+target = "https://vectorindex.cloud/"
+
+# Sean's homepage and verified public profiles.
+# Primary profile paths use the platform's domain name (without its suffix).
+[[redirects]]
+path = "/sean"
+target = "https://vectorindex.cloud/"
+
+[[redirects]]
+path = "/sean/linkedin"
+target = "https://www.linkedin.com/in/yuxiaoli/"
+
+# Previously shared abbreviation retained for compatibility.
+[[redirects]]
+path = "/sean/in"
+target = "https://www.linkedin.com/in/yuxiaoli/"
+
+[[redirects]]
+path = "/sean/github"
+target = "https://github.com/yuxiaoli"
+
+[[redirects]]
+path = "/sean/douyin"
+target = "https://v.douyin.com/iDbGwGwk/"
+
+[[redirects]]
+path = "/sean/xiaohongshu"
+target = "https://www.xiaohongshu.com/user/profile/65236ef6000000002a035419"
+
+# Keep the Official Account distinct from other WeChat services.
+[[redirects]]
+path = "/sean/weixin/official"
+target = "https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkyMzYzMDU0MA==&scene=124#wechat_redirect"

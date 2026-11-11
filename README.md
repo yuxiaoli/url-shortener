@@ -2,23 +2,37 @@
 
 A small Cloudflare Worker backed by Workers KV. Edit a project configuration file, validate it, then publish a complete redirect snapshot. The initial hostname is `https://s.vectorindex.cloud`.
 
-**Status:** JSON configuration, redirect Worker and safe KV synchronization are implemented. Live resource IDs and credentials must be configured before production use. The original Python/TinyURL client remains available as `main.py`.
+**Status:** TOML authoring, validated JSON conversion, the redirect Worker and safe KV synchronization are implemented. Production automation still requires its explicitly enabled environment and verified existing credentials; a successful validation job alone is not proof of synchronization. The original Python/TinyURL client remains available as `main.py`.
 
 ## Configuration
 
-`links.json` is the repository-managed input. Its initial public test mapping is `/test` → `https://vectorindex.cloud/`. This repository is public: committing a destination URL publishes it in Git and its history. Never commit private URLs, signed download links, embedded credentials, or tokens. Keep private mappings in ignored `links.local.json`, or use an explicitly approved private repository before enabling GitHub publishing.
+`links.toml` is the single repository-managed source of truth. `npm run links:build` converts it to ignored `.local/links.json`; do not edit generated JSON. The Worker continues reading the existing JSON snapshot from KV without a redeploy. The configured public mappings are:
+
+| Short path | Destination |
+| --- | --- |
+| `/sean` | Sean’s homepage, `https://vectorindex.cloud/` |
+| `/sean/linkedin` | LinkedIn profile |
+| `/sean/github` | GitHub profile |
+| `/sean/douyin` | Douyin profile/share link |
+| `/sean/xiaohongshu` | Xiaohongshu profile |
+| `/sean/weixin/official` | WeChat Official Account |
+
+Exact destinations are in `links.toml`. Primary social slugs use the platform domain label, such as `linkedin`, `github`, `douyin`, and `xiaohongshu`. The Official Account uses `mp.weixin.qq.com`, so it is identified below `weixin` to distinguish it from other WeChat services. The previously shared `/sean/in` remains a LinkedIn compatibility alias, and `/test` keeps its homepage mapping. These destinations were verified against Sean’s supplied links and current profile sources; availability inside each third-party app is separate from redirect correctness. Email and a standalone WeChat username are not invented into HTTP profile URLs. Add a platform only after its actual personal-profile URL is verified, never from a schema field or example URL. These are source definitions; production activation must be verified separately. This repository is public: committing a destination URL publishes it in Git and its history. Never commit private URLs, signed download links, embedded credentials, or tokens. Keep private mappings in ignored `links.local.toml`, or use an explicitly approved private repository before enabling GitHub publishing.
 
 Example, using public destinations only:
 
-```json
-{
-  "schemaVersion": 1,
-  "publicOrigin": "https://s.vectorindex.cloud",
-  "redirects": [
-    { "path": "/home", "target": "https://example.com/" },
-    { "path": "/docs/cloudflare", "target": "https://developers.cloudflare.com/workers/" }
-  ]
-}
+```toml
+schemaVersion = 1
+publicOrigin = "https://s.vectorindex.cloud"
+
+# Comments stay in this source file, not in the generated KV JSON.
+[[redirects]]
+path = "/home"
+target = "https://example.com/"
+
+[[redirects]]
+path = "/docs/cloudflare"
+target = "https://developers.cloudflare.com/workers/"
 ```
 
 `/home` matches exactly and redirects to the saved URL. Paths are case-sensitive; `/home/` is not an alias. Nested paths work. Allowed path characters are ASCII letters, digits, `_`, `-`, and `/` separators, up to 160 characters. An explicit `/` entry is allowed; otherwise the root returns 404. Each path must occur once.
@@ -29,11 +43,12 @@ Limit: 1,000 links / 256 KiB per snapshot. These are intentional application lim
 
 ## Local checks
 
-Node 22 or later is required. The core Worker, validator and sync tool have no third-party runtime dependencies.
+Node 22+ and Python 3.11+ are required for authoring/sync. TOML is parsed by Python's standard-library `tomllib`, then checked by the same JavaScript validator as the Worker. No parser package or runtime Worker dependency is added. The converter uses `python3` on Unix and `python` on Windows; set `PYTHON` to an executable path if needed. CI installs Python 3.12.
 
 ```sh
 npm run check
 npm run links:validate
+npm run links:build
 npm ci
 npm run test:edge
 ```
@@ -44,7 +59,8 @@ For private local configuration:
 
 ```sh
 npm run links:init
-node scripts/sync.mjs validate --file links.local.json
+node scripts/sync.mjs validate --file links.local.toml
+node scripts/convert.mjs --file links.local.toml --output .local/private-links.json
 ```
 
 Initialization refuses to overwrite an existing file. Local configuration, sync plans, backups, credentials and production Wrangler configuration are ignored by Git.
@@ -62,7 +78,7 @@ Initialization refuses to overwrite an existing file. Local configuration, sync 
 
 See [deployment and operations](docs/operations.md) before provisioning or enabling automation.
 
-The publisher validates the whole file and writes one KV value, `redirects:v1`. This avoids a per-link update partially succeeding. Invalid local input never writes. A local recovery copy and a single previous-snapshot KV slot are created before replacing an existing active snapshot.
+The publisher defaults to `links.toml`; legacy JSON remains supported through `--file path.json`. The converter validates the whole file before producing JSON. The publisher writes one KV value, `redirects:v1`. This avoids a per-link update partially succeeding. Invalid local input never writes. A local recovery copy and a single previous-snapshot KV slot are created before replacing an existing active snapshot.
 
 Dry-run plan, followed by explicit application:
 
@@ -87,11 +103,13 @@ Validation/read/backup errors stop before the active write. A timeout or ambiguo
 
 `.github/workflows/short-links.yml` validates PRs and relevant pushes to `develop`. Publishing is disabled unless repository variable `SHORT_LINKS_SYNC_ENABLED` is exactly `true` and the `short-links-production` environment is configured.
 
-Once explicitly enabled with authorized credentials and a verified dedicated namespace, valid commits on current `develop` sync automatically. Stale workflow reruns are rejected. Intentional rollback should be a new commit, not a rerun of an old job. No PR receives the publishing secret, and the workflow has read-only repository permissions.
+Once explicitly enabled with authorized credentials and a verified dedicated namespace, valid commits on current `develop` automatically convert `links.toml` to `.local/links.json`, synchronize that JSON, and verify the public redirects. The active key and JSON schema are unchanged. Comments/formatting-only edits result in `unchanged`, with no KV writes. The job summary distinguishes `accepted` from `unchanged`; a skipped sync job is not an activated publisher. Stale workflow reruns are rejected. Intentional rollback should be a new commit, not a rerun of an old job. No PR receives the publishing secret, and the workflow has read-only repository permissions.
 
 Path removals stop automatic publishing. Deliberate removals can be applied by a manual workflow run with the relevant checkbox, or by the approved single local publisher. GitHub requires the workflow to exist on the repository’s default branch for the manual Actions dispatch UI; this repository currently defaults to `main`. Do not change that branch or its contents merely to bypass this setup decision.
 
-An empty map will not be published automatically. Only the public homepage test link is bundled; no credentials or private destinations are included.
+To use the same pipeline locally only when it is the authorized sole publisher, run `npm run links:sync`. `npm run links:verify` is read-only: it verifies all generated mappings, HEAD, unknown-path 404 and POST 405, without following redirects. It retries only reads for propagation and covers one network region.
+
+An empty map will not be published automatically. Only public homepage links and Sean’s confirmed social-profile links are bundled; no credentials or private destinations are included.
 
 ## Original Python client
 

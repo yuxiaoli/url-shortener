@@ -14,7 +14,10 @@
     "links:plan": "node scripts/sync.mjs plan",
     "links:apply": "node scripts/sync.mjs apply",
     "dev": "wrangler dev --local --ip 127.0.0.1",
-    "test:edge": "node scripts/edge-smoke.mjs"
+    "test:edge": "node scripts/edge-smoke.mjs",
+    "links:build": "node scripts/convert.mjs",
+    "links:sync": "npm run links:build && node scripts/sync.mjs sync --file .local/links.json",
+    "links:verify": "node scripts/verify-live.mjs"
   },
   "devDependencies": {
     "wrangler": "4.153.0"

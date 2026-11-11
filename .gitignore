@@ -177,3 +177,5 @@ wrangler.production.jsonc
 node_modules/
 .wrangler/
 dist/
+
+links.local.toml

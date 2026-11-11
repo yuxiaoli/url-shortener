@@ -3,6 +3,8 @@ import {createRequire} from 'node:module';
 import {spawnSync} from 'node:child_process';
 import {readFileSync, mkdirSync} from 'node:fs';
 import {resolve, dirname} from 'node:path';
+import {readSourceConfig} from './source.mjs';
+import {canonicalConfig} from '../src/config.mjs';
 const require = createRequire(import.meta.url);
 const wranglerPackage = require.resolve('wrangler/package.json');
 const wranglerRequire = createRequire(wranglerPackage);
@@ -24,6 +26,20 @@ try {
  const head=await mf.dispatchFetch('https://s.vectorindex.cloud/smoke',{method:'HEAD',redirect:'manual'});assert.equal(head.status,302);assert.equal(await head.text(),'');
  const absent=await mf.dispatchFetch('https://s.vectorindex.cloud/not-there');assert.equal(absent.status,404);
  const write=await mf.dispatchFetch('https://s.vectorindex.cloud/api/links',{method:'POST'});assert.equal(write.status,405);
+ // Exercise the actual TOML -> JSON -> KV -> Worker flow without contacting
+ // production or following the public destinations.
+ const configured = await readSourceConfig('links.toml');
+ await kv.put('redirects:v1', canonicalConfig(configured));
+ for (const link of configured.redirects) {
+  for (const method of ['GET', 'HEAD']) {
+   const response = await mf.dispatchFetch(configured.publicOrigin + link.path + '?next=https://evil.example', {method, redirect:'manual'});
+   assert.equal(response.status,302);
+   assert.equal(response.headers.get('location'),link.target);
+   assert.equal(response.headers.get('cache-control'),'no-store');
+   assert.equal(await response.text(),'');
+  }
+ }
+ console.log(`Actual TOML mappings: ${configured.redirects.length} exact GET/HEAD redirects passed in local workerd/KV.`);
  await kv.put('redirects:v1','broken');
  const broken=await mf.dispatchFetch('https://s.vectorindex.cloud/smoke');assert.equal(broken.status,503);
  console.log('Local workerd/KV integration: GET, HEAD, unknown path, blocked write and corrupt snapshot passed.');

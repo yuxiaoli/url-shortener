@@ -1,0 +1,4 @@
+# Private local template. Add [[redirects]] entries before publishing.
+schemaVersion = 1
+publicOrigin = "https://s.vectorindex.cloud"
+redirects = []
