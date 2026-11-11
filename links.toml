@@ -1,4 +1,5 @@
 # Source of truth. Edit this file; JSON is generated during publishing.
+# GitHub Actions on develop is the production publisher; do not sync concurrently.
 # This repository is public. Never store credentials or private URLs here.
 schemaVersion = 1
 publicOrigin = "https://s.vectorindex.cloud"
