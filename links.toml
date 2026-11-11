@@ -8,16 +8,18 @@ path = "/test"
 target = "https://vectorindex.cloud/"
 
 # Sean's homepage and verified public profiles.
+# Primary profile paths use the platform's domain name (without its suffix).
 [[redirects]]
 path = "/sean"
 target = "https://vectorindex.cloud/"
 
 [[redirects]]
-path = "/sean/in"
+path = "/sean/linkedin"
 target = "https://www.linkedin.com/in/yuxiaoli/"
 
+# Previously shared abbreviation retained for compatibility.
 [[redirects]]
-path = "/sean/linkedin"
+path = "/sean/in"
 target = "https://www.linkedin.com/in/yuxiaoli/"
 
 [[redirects]]
