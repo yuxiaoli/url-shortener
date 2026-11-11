@@ -1,14 +1,14 @@
 name: Validate and sync short links
 on:
   pull_request:
-    paths: ['links.json', 'src/**', 'scripts/**', 'tests/**', 'package*.json', '.github/workflows/short-links.yml']
+    paths: ['links.toml', 'links.json', 'links.example.toml', 'src/**', 'scripts/**', 'tests/**', 'package*.json', '.github/workflows/short-links.yml']
   push:
     branches: [develop]
-    paths: ['links.json', 'src/**', 'scripts/**', 'tests/**', 'package*.json', '.github/workflows/short-links.yml']
+    paths: ['links.toml', 'links.json', 'links.example.toml', 'src/**', 'scripts/**', 'tests/**', 'package*.json', '.github/workflows/short-links.yml']
   workflow_dispatch:
     inputs:
       allow_removals:
-        description: 'Explicitly allow paths removed from links.json to stop working'
+        description: 'Explicitly allow paths removed from links.toml to stop working'
         type: boolean
         default: false
       allow_empty:
@@ -28,9 +28,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      # Core validation/sync have no third-party runtime dependencies.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # TOML uses Python's standard library; the Worker still consumes JSON.
       - run: npm run check
       - run: npm run links:validate
+      - run: npm run links:build
   sync:
     if: >-
       github.event_name != 'pull_request' &&
@@ -44,6 +48,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Convert TOML to the validated JSON snapshot
+        run: npm run links:build
       - name: Refuse stale workflow runs
         shell: bash
         run: |
@@ -64,4 +73,15 @@ jobs:
           flags=()
           if [[ "$ALLOW_REMOVALS" == "true" ]]; then flags+=(--allow-removals); fi
           if [[ "$ALLOW_EMPTY" == "true" ]]; then flags+=(--allow-empty); fi
-          node scripts/sync.mjs sync "${flags[@]}"
+          node scripts/sync.mjs sync --file .local/links.json "${flags[@]}"
+      - name: Verify public redirects after synchronization
+        run: npm run links:verify
+      - name: Record synchronization result
+        run: |
+          node --input-type=module -e '
+            import {readFileSync, appendFileSync} from "node:fs";
+            const result = JSON.parse(readFileSync(".local/last-sync.json", "utf8"));
+            if (!["accepted", "unchanged"].includes(result.status)) process.exit(1);
+            appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+              `TOML → validated JSON → existing KV: **${result.status}**\n\nPublic redirect verification passed from the GitHub runner. Worker and domain were not redeployed.\n`);
+          '

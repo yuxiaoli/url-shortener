@@ -48,7 +48,7 @@ export function cloudflareClient({accountId, namespaceId, token, fetcher = fetch
   if (!/^[a-f0-9]{32}$/i.test(accountId ?? '') || !/^[a-f0-9]{32}$/i.test(namespaceId ?? '')) {
     throw new Error('Set valid CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_KV_NAMESPACE_ID.');
   }
-  if (typeof token !== 'string' || !token.trim()) throw new Error('CLOUDFLARE_API_TOKEN is required; never put it in links.json.');
+  if (typeof token !== 'string' || !token.trim()) throw new Error('CLOUDFLARE_API_TOKEN is required; never put it in link configuration.');
   const base = `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces/${namespaceId}`;
   async function request(url, method = 'GET', body) {
     let response;

@@ -1,0 +1,8 @@
+# Source of truth. Edit this file; JSON is generated during publishing.
+# This repository is public. Never store credentials or private URLs here.
+schemaVersion = 1
+publicOrigin = "https://s.vectorindex.cloud"
+
+[[redirects]]
+path = "/test"
+target = "https://vectorindex.cloud/"
