@@ -7,7 +7,19 @@ publicOrigin = "https://s.vectorindex.cloud"
 path = "/test"
 target = "https://vectorindex.cloud/"
 
-# Sean's public LinkedIn profile.
+# Sean's homepage and verified public profiles.
 [[redirects]]
 path = "/sean"
+target = "https://vectorindex.cloud/"
+
+[[redirects]]
+path = "/sean/in"
 target = "https://www.linkedin.com/in/yuxiaoli/"
+
+[[redirects]]
+path = "/sean/linkedin"
+target = "https://www.linkedin.com/in/yuxiaoli/"
+
+[[redirects]]
+path = "/sean/github"
+target = "https://github.com/yuxiaoli"
