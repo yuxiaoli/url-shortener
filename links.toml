@@ -6,3 +6,8 @@ publicOrigin = "https://s.vectorindex.cloud"
 [[redirects]]
 path = "/test"
 target = "https://vectorindex.cloud/"
+
+# Sean's public LinkedIn profile.
+[[redirects]]
+path = "/sean"
+target = "https://www.linkedin.com/in/yuxiaoli/"
