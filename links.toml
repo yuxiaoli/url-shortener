@@ -25,3 +25,16 @@ target = "https://www.linkedin.com/in/yuxiaoli/"
 [[redirects]]
 path = "/sean/github"
 target = "https://github.com/yuxiaoli"
+
+[[redirects]]
+path = "/sean/douyin"
+target = "https://v.douyin.com/iDbGwGwk/"
+
+[[redirects]]
+path = "/sean/xiaohongshu"
+target = "https://www.xiaohongshu.com/user/profile/65236ef6000000002a035419"
+
+# Keep the Official Account distinct from other WeChat services.
+[[redirects]]
+path = "/sean/weixin/official"
+target = "https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkyMzYzMDU0MA==&scene=124#wechat_redirect"

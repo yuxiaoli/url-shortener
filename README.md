@@ -6,7 +6,18 @@ A small Cloudflare Worker backed by Workers KV. Edit a project configuration fil
 
 ## Configuration
 
-`links.toml` is the single repository-managed source of truth. `npm run links:build` converts it to ignored `.local/links.json`; do not edit generated JSON. The Worker continues reading the existing JSON snapshot from KV without a redeploy. The configured public mappings are `/sean` → `https://vectorindex.cloud/`, `/sean/linkedin` → `https://www.linkedin.com/in/yuxiaoli/`, and `/sean/github` → `https://github.com/yuxiaoli`. The existing `/test` homepage mapping is retained. Primary social slugs consistently use the platform domain name without its suffix, such as `linkedin` and `github`; the previously shared `/sean/in` remains a compatibility alias. Add a platform only after its actual personal-profile URL is verified, never from a schema field or example URL. These are source definitions; production activation must be verified separately. This repository is public: committing a destination URL publishes it in Git and its history. Never commit private URLs, signed download links, embedded credentials, or tokens. Keep private mappings in ignored `links.local.toml`, or use an explicitly approved private repository before enabling GitHub publishing.
+`links.toml` is the single repository-managed source of truth. `npm run links:build` converts it to ignored `.local/links.json`; do not edit generated JSON. The Worker continues reading the existing JSON snapshot from KV without a redeploy. The configured public mappings are:
+
+| Short path | Destination |
+| --- | --- |
+| `/sean` | Sean’s homepage, `https://vectorindex.cloud/` |
+| `/sean/linkedin` | LinkedIn profile |
+| `/sean/github` | GitHub profile |
+| `/sean/douyin` | Douyin profile/share link |
+| `/sean/xiaohongshu` | Xiaohongshu profile |
+| `/sean/weixin/official` | WeChat Official Account |
+
+Exact destinations are in `links.toml`. Primary social slugs use the platform domain label, such as `linkedin`, `github`, `douyin`, and `xiaohongshu`. The Official Account uses `mp.weixin.qq.com`, so it is identified below `weixin` to distinguish it from other WeChat services. The previously shared `/sean/in` remains a LinkedIn compatibility alias, and `/test` keeps its homepage mapping. These destinations were verified against Sean’s supplied links and current profile sources; availability inside each third-party app is separate from redirect correctness. Email and a standalone WeChat username are not invented into HTTP profile URLs. Add a platform only after its actual personal-profile URL is verified, never from a schema field or example URL. These are source definitions; production activation must be verified separately. This repository is public: committing a destination URL publishes it in Git and its history. Never commit private URLs, signed download links, embedded credentials, or tokens. Keep private mappings in ignored `links.local.toml`, or use an explicitly approved private repository before enabling GitHub publishing.
 
 Example, using public destinations only:
 
@@ -98,7 +109,7 @@ Path removals stop automatic publishing. Deliberate removals can be applied by a
 
 To use the same pipeline locally only when it is the authorized sole publisher, run `npm run links:sync`. `npm run links:verify` is read-only: it verifies all generated mappings, HEAD, unknown-path 404 and POST 405, without following redirects. It retries only reads for propagation and covers one network region.
 
-An empty map will not be published automatically. Only public homepage links and Sean's verified LinkedIn/GitHub profiles are bundled; no credentials or private destinations are included.
+An empty map will not be published automatically. Only public homepage links and Sean’s confirmed social-profile links are bundled; no credentials or private destinations are included.
 
 ## Original Python client
 
